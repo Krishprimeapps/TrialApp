@@ -130,7 +130,7 @@
 // #import <MediaPlayer/MediaPlayer.h>
 // #import "CarPlayEventEmitter.h"
 
-// #import <GoogleCast/GoogleCast.h>
+#import <GoogleCast/GoogleCast.h>
 
 
 @implementation AppDelegate
@@ -152,11 +152,12 @@
   if (sessionError) {
     NSLog(@"Failed to activate audio session: %@", sessionError);
   }
-// NSString *receiverAppID = kGCKDefaultMediaReceiverApplicationID; // or @"ABCD1234"
-//   GCKDiscoveryCriteria *criteria = [[GCKDiscoveryCriteria alloc] initWithApplicationID:receiverAppID];
-//   GCKCastOptions* options = [[GCKCastOptions alloc] initWithDiscoveryCriteria:criteria];
-//   options.suspendSessionsWhenBackgrounded = false;
-//   [GCKCastContext setSharedInstanceWithOptions:options];
+
+NSString *receiverAppID = kGCKDefaultMediaReceiverApplicationID; // or @"ABCD1234"
+  GCKDiscoveryCriteria *criteria = [[GCKDiscoveryCriteria alloc] initWithApplicationID:receiverAppID];
+  GCKCastOptions* options = [[GCKCastOptions alloc] initWithDiscoveryCriteria:criteria];
+  options.suspendSessionsWhenBackgrounded = false;
+  [GCKCastContext setSharedInstanceWithOptions:options];
 //  MPRemoteCommandCenter *commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
 
 //   [commandCenter.playCommand setEnabled:YES];

@@ -68,11 +68,13 @@ PODS:
     - FlipperKit/FlipperKitNetworkPlugin
   - fmt (6.2.1)
   - glog (0.3.5)
+  - google-cast-sdk-dynamic-xcframework-no-bluetooth (4.7.1)
   - hermes-engine (0.73.11):
     - hermes-engine/Pre-built (= 0.73.11)
   - hermes-engine/Pre-built (0.73.11)
   - libevent (2.1.12)
   - OpenSSL-Universal (1.1.1100)
+  - PromisesObjC (2.4.0)
   - RCT-Folly (2022.05.16.00):
     - boost
     - DoubleConversion
@@ -948,6 +950,16 @@ PODS:
     - React-debug
   - react-native-carplay (2.4.1-beta.0):
     - React
+  - react-native-google-cast (4.6.1):
+    - React
+    - react-native-google-cast/NoBluetoothArm (= 4.6.1)
+  - react-native-google-cast/NoBluetoothArm (4.6.1):
+    - google-cast-sdk-dynamic-xcframework-no-bluetooth
+    - React
+    - react-native-google-cast/RNGoogleCast
+  - react-native-google-cast/RNGoogleCast (4.6.1):
+    - PromisesObjC
+    - React
   - react-native-video (6.14.1):
     - glog
     - RCT-Folly (= 2022.05.16.00)
@@ -1182,6 +1194,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - react-native-carplay (from `../node_modules/react-native-carplay`)
+  - react-native-google-cast (from `../node_modules/react-native-google-cast`)
   - react-native-video (from `../node_modules/react-native-video`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -1217,8 +1230,10 @@ SPEC REPOS:
     - Flipper-PeerTalk
     - FlipperKit
     - fmt
+    - google-cast-sdk-dynamic-xcframework-no-bluetooth
     - libevent
     - OpenSSL-Universal
+    - PromisesObjC
     - SocketRocket
 
 EXTERNAL SOURCES:
@@ -1281,6 +1296,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   react-native-carplay:
     :path: "../node_modules/react-native-carplay"
+  react-native-google-cast:
+    :path: "../node_modules/react-native-google-cast"
   react-native-video:
     :path: "../node_modules/react-native-video"
   React-nativeconfig:
@@ -1342,9 +1359,11 @@ SPEC CHECKSUMS:
   FlipperKit: 37525a5d056ef9b93d1578e04bc3ea1de940094f
   fmt: ff9d55029c625d3757ed641535fd4a75fedc7ce9
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
+  google-cast-sdk-dynamic-xcframework-no-bluetooth: 1fa9e267df3fd6f8a1c6e3345142ca5286297968
   hermes-engine: d992945b77c506e5164e6a9a77510c9d57472c59
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
+  PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RCT-Folly: 7169b2b1c44399c76a47b5deaaba715eeeb476c0
   RCTRequired: 415e56f7c33799a6483e41e4dce607f3daf1e69b
   RCTTypeSafety: e984a88e713281c2d8c2309a1a6d2775af0107ae
@@ -1368,6 +1387,7 @@ SPEC CHECKSUMS:
   React-logger: 6c1170f7bc315878ef4bd3b918e09130cf632798
   React-Mapbuffer: 41c166b84fc479afc78097cd51404109ec9edf68
   react-native-carplay: 474f4e36fe22a09e1da4c78d53dd0ac416ec7675
+  react-native-google-cast: 03a17bb1b810355978af2b6105029a2197cb0b86
   react-native-video: 2ac8dae68baab8ea44b57c423cfaf98012ed9410
   React-nativeconfig: 8fd29a35a3e4e8c37682d976667663d834ba6165
   React-NativeModulesApple: 68eb729eaf628ba066bca5308dd4ccacaaacba97
@@ -1392,6 +1412,6 @@ SPEC CHECKSUMS:
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   Yoga: a813a6d82538ccba91c54406404e3ed80b48a692
 
-PODFILE CHECKSUM: 1534eabd0124413d25982087f3e3efa1fef4512e
+PODFILE CHECKSUM: 2ba5752276ba408cc3c1c79c02e9542c48a1d9d6
 
 COCOAPODS: 1.16.2

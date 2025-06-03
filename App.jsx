@@ -1,11 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Video from 'react-native-video';
-// import GoogleCast, { CastButton, useCastState, CastState } from 'react-native-google-cast';
-// import { PermissionsAndroid, Platform } from 'react-native';
+import GoogleCast, { CastButton, useCastState, CastState,useRemoteMediaClient  } from 'react-native-google-cast';
+import { PermissionsAndroid, Platform } from 'react-native';
 import createListTemplate from './src/templates/list';
 import { CarPlay } from 'react-native-carplay';
-// import { NativeModules, NativeEventEmitter } from 'react-native';
+import { NativeModules, NativeEventEmitter } from 'react-native';
 import {
   AirplayButton,
   showRoutePicker,
@@ -19,37 +19,41 @@ import {
 const testAudio1 = require('./Audio-1.mp3');
 const testAudio2 = require('./Audio-2.mp3');
 
-// const REMOTE_AUDIO_1 = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'; 
-// const REMOTE_AUDIO_2 = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3';
+const REMOTE_AUDIO_1 = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'; 
+const REMOTE_AUDIO_2 = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3';
 
 const App = () => { 
   const isAirplayConnected = useAirplayConnectivity();
   const isExternalPlaybackAvailable = useExternalPlaybackAvailability();
   const routes = useAvAudioSessionRoutes();
-  // const activePlayerRef = useRef(1);
-  // const onCrossfadeComplete = () => {
-  //   console.log('Crossfade complete — switching CarPlay control to audio 2');
-  //   activePlayerRef.current = 2;
-  // };
-  // useEffect(() => {
-  //   const requestPermissions = async () => {
-  //     if (Platform.OS === 'android' && Platform.Version >= 33) {
-  //       const granted = await PermissionsAndroid.request(
-  //         PermissionsAndroid.PERMISSIONS.NEARBY_WIFI_DEVICES,
-  //         {
-  //           title: 'Nearby Wi-Fi Devices Permission',
-  //           message: 'This app requires access to nearby devices to detect Cast targets.',
-  //           buttonPositive: 'OK',
-  //         }
-  //       );
-  //       console.log('Nearby Wi-Fi permission granted:', granted);
-  //     }
-  //   };
+  const activePlayerRef = useRef(1);
+  const onCrossfadeComplete = () => {
+    console.log('Crossfade complete — switching CarPlay control to audio 2');
+    activePlayerRef.current = 2;
+  };
+
+
+
+
+  useEffect(() => {
+    const requestPermissions = async () => {
+      if (Platform.OS === 'android' && Platform.Version >= 33) {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.NEARBY_WIFI_DEVICES,
+          {
+            title: 'Nearby Wi-Fi Devices Permission',
+            message: 'This app requires access to nearby devices to detect Cast targets.',
+            buttonPositive: 'OK',
+          }
+        );
+        // console.log('Nearby Wi-Fi permission granted:', granted);
+      }
+    };
   
-  //   requestPermissions();
-  // }, []);
+    requestPermissions();
+  }, []);
   const startOnSecondsLeft = 25;
-  // const castState = useCastState();
+  const castState = useCastState();
 
   const [player1Volume, setPlayer1Volume] = useState(1);
   const [player2Volume, setPlayer2Volume] = useState(0);
@@ -62,7 +66,7 @@ const App = () => {
   const checkFlag = useRef(false);
 
   const handleProgress = (audioFile) => {
-    // if (castState === CastState.CONNECTED) return; 
+    if (castState === CastState.CONNECTED) return; 
 
     const audioDuration = Math.ceil(audioFile.seekableDuration);
     const currentTime = Math.ceil(audioFile.currentTime);
@@ -71,7 +75,7 @@ const App = () => {
       if (playerRef2.current) {
         playerRef2.current.resume();
         setIsPlaying2(true);
-        // onCrossfadeComplete();
+        onCrossfadeComplete();
       }
 
       const percentage = (currentTime - (audioDuration - startOnSecondsLeft)) / startOnSecondsLeft;
@@ -87,14 +91,14 @@ const App = () => {
 
   
   const togglePlayPause1 = () => {
-    // if (castState === CastState.CONNECTED) return; 
+    if (castState === CastState.CONNECTED) return; 
     if (isPlaying1) playerRef.current.pause();
     else playerRef.current.resume();
     setIsPlaying1(!isPlaying1);
   };
 
   const togglePlayPause2 = () => {
-    // if (castState === CastState.CONNECTED) return; 
+    if (castState === CastState.CONNECTED) return; 
     if (isPlaying2) playerRef2.current.pause();
     else playerRef2.current.resume();
     setIsPlaying2(!isPlaying2);
@@ -118,19 +122,29 @@ const App = () => {
   //     setIsPlaying2(true);
   //   }
   // };
-  // const castAudio = (url, title) => {
-  //   GoogleCast.castMedia({
-  //     mediaUrl: url,
-  //     title: title,
-  //     contentType: 'audio/mp3',
-  //   });
-  // };
+  const castAudio = (url, title) => {
+    GoogleCast.castMedia({
+      mediaUrl: url,
+      title: title,
+      contentType: 'audio/mp3',
+    });
+  };
+
+  useEffect(() => {
+    if (
+      castState === CastState.CONNECTING || 
+      castState === CastState.CONNECTED || 
+      castState === CastState.NOT_CONNECTED
+    ) {
+      // The CastButton was likely pressed and cast device picker opened/changed
+      console.log('Cast button pressed — cast state changed:', castState);
+    }
+  }, [castState]);
 
 
-
-// useEffect(() => {
-//   console.log('Cast state:', castState);
-// }, [castState]);
+useEffect(() => {
+  console.log('Cast state:', castState);
+}, [castState]);
 
 // const isPlaying1Ref = useRef(isPlaying1);
 // const isPlaying2Ref = useRef(isPlaying2);
@@ -142,19 +156,19 @@ const App = () => {
 // useEffect(() => {
 //   isPlaying2Ref.current = isPlaying2;
 // }, [isPlaying2]);
-useEffect(() => {
-  console.log('AirPlay Connected:', isAirplayConnected);
-  console.log('External Playback Available:', isExternalPlaybackAvailable);
-  console.log('AV Routes:', routes);
-}, [isAirplayConnected, isExternalPlaybackAvailable, routes]);
+// useEffect(() => {
+//   // console.log('AirPlay Connected:', isAirplayConnected);
+//   // console.log('External Playback Available:', isExternalPlaybackAvailable);
+//   // console.log('AV Routes:', routes);
+// }, [isAirplayConnected, isExternalPlaybackAvailable, routes]);
   useEffect(() => {
-    // if (castState === CastState.CONNECTED) {
-    //   playerRef.current?.pause();
-    //   playerRef2.current?.pause();
-    //   setIsPlaying1(false);
-    //   setIsPlaying2(false);
-    //   return;
-    // }
+    if (castState === CastState.CONNECTED) {
+      playerRef.current?.pause();
+      playerRef2.current?.pause();
+      setIsPlaying1(false);
+      setIsPlaying2(false);
+      return;
+    }
     // console.log(Object.keys(CarPlay));
     if (playerRef2.current) {
       playerRef2.current.pause();
@@ -179,7 +193,7 @@ useEffect(() => {
         }
       })();
     }
-  }, [duration]); //castState was there
+  }, [duration,castState]); //castState was there
   
   useEffect(() => { 
         if (!CarPlay.connected) {
@@ -317,9 +331,9 @@ useEffect(() => {
       <View style={styles.playerContainer}>
         <Text style={styles.title}>First Audio </Text>
 
-        {/* {castState === CastState.CONNECTED ? (
+         {castState === CastState.CONNECTED ? (
           <Text style={styles.castingText}>Casting is active. Local playback disabled.</Text>
-        ) : (  )} */}
+        ) : (   
           <>
             <Video
               source={testAudio1}
@@ -344,7 +358,7 @@ useEffect(() => {
             </TouchableOpacity>
             <Text style={styles.volumeText}>Volume: {(player1Volume * 100).toFixed(0)}%</Text>
           </>
-         
+         )}
         
 
    
@@ -360,9 +374,9 @@ useEffect(() => {
       <View style={styles.playerContainer}>
         <Text style={styles.title}>Second Audio </Text>
 
-        {/* {castState === CastState.CONNECTED ? (
+        {castState === CastState.CONNECTED ? (
           <Text style={styles.castingText}>Casting is active. Local playback disabled.</Text>
-        ) : ( )} */}
+        ) : ( 
           <>
             <Video
               source={testAudio2}
@@ -384,14 +398,17 @@ useEffect(() => {
             </TouchableOpacity>
             <Text style={styles.volumeText}>Volume: {(player2Volume * 100).toFixed(0)}%</Text>
           </>
+          )}
+          
           {/* <AirplayButton
            prioritizesVideoDevices={true}
            tintColor="black"
            activeTintColor="blue"
            style={{ width: 44, height: 44, backgroundColor: 'gray'}}
-           
-/> */}
+           /> */}
+               <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       
+    </View>
         {/* <TouchableOpacity
           onPress={() => castAudio(REMOTE_AUDIO_2, 'Second Remote Audio')}
           style={[styles.button, { backgroundColor: '#34C759', marginTop: 10 }]}
@@ -407,10 +424,13 @@ useEffect(() => {
            tintColor="black"
            activeTintColor="blue"
            style={{ width: 44, height: 44, backgroundColor: 'gray'}}
-           
-/>
-        </View>
+           />
+           </View>
       )}
+      <View>
+      <CastButton style={{ width: 40, height: 40, tintColor: 'black' , backgroundColor: 'gray'}}/>
+      </View>
+       
       </View>
     </View>
     
@@ -425,15 +445,15 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
     paddingHorizontal: 20,
   },
-  // castButtonContainer: {
-  //   alignItems: 'flex-end',
-  //   marginBottom: 10,
-  // },
-  // castButton: {
-  //   width: 24,
-  //   height: 24,
-  //   tintColor: 'black',
-  // },
+  castButtonContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 10,
+  },
+  castButton: {
+    width: 24,
+    height: 24,
+    tintColor: 'black',
+  },
   playerContainer: {
     marginVertical: 20,
     padding: 15,
@@ -483,12 +503,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333333',
   },
-  // castingText: {
-  //   fontSize: 16,
-  //   color: 'green',
-  //   marginTop: 15,
-  //   fontWeight: '600',
-  // },
+  castingText: {
+    fontSize: 16,
+    color: 'green',
+    marginTop: 15,
+    fontWeight: '600',
+  },
 });
 
 export default App;

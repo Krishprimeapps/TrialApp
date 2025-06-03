@@ -92,7 +92,7 @@
 # # //use_frameworks! :linkage => :static Linking issues fix
 
 
-# Resolve react_native_pods.rb with node to allow for hoisting
+# # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
     "react-native/scripts/react_native_pods.rb",
@@ -121,6 +121,7 @@ end
 
 target 'TrialApp' do
   config = use_native_modules!
+  # use_frameworks! :linkage => :static
 
   use_react_native!(
     :path => config[:reactNativePath],
@@ -137,6 +138,7 @@ target 'TrialApp' do
     inherit! :complete
     # Pods for testing
   end
+  
 
   post_install do |installer|
     # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
@@ -147,3 +149,94 @@ target 'TrialApp' do
     )
   end
 end
+
+
+
+# require_relative '../node_modules/react-native/scripts/react_native_pods'
+# require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+
+# platform :ios, '15.0'
+
+# flipper_config = ENV['NO_FLIPPER'] == "1" ? FlipperConfiguration.disabled : FlipperConfiguration.enabled
+
+# target 'TrialApp' do
+#   config = use_native_modules!
+
+#   use_react_native!(
+#     :path => config[:reactNativePath],
+#     :flipper_configuration => flipper_config,
+#     :app_path => "#{Pod::Config.instance.installation_root}/.."
+#   )
+
+#   target 'TrialAppTests' do
+#     inherit! :complete
+#   end
+
+#   # Do NOT manually add Flipper pods here! `use_react_native!` handles it.
+
+#   post_install do |installer|
+#     react_native_post_install(
+#       installer,
+#       config[:reactNativePath],
+#       mac_catalyst_enabled: false
+#     )
+
+#     # Fix header search paths for Flipper-Folly
+#     installer.pods_project.targets.each do |target|
+#       if target.name == 'Flipper-Folly'
+#         target.build_configurations.each do |config|
+#           config.build_settings['HEADER_SEARCH_PATHS'] ||= '$(inherited)'
+#           config.build_settings['HEADER_SEARCH_PATHS'] << '$(PODS_ROOT)/Flipper-Folly/folly'
+#         end
+#       end
+#     end
+#   end
+# end
+
+
+
+
+# require_relative '../node_modules/react-native/scripts/react_native_pods'
+# require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+
+# platform :ios, '15.0'
+
+# flipper_config = ENV['NO_FLIPPER'] == "1" ? FlipperConfiguration.disabled : FlipperConfiguration.enabled
+
+# target 'TrialApp' do
+#   config = use_native_modules!
+
+#   use_react_native!(
+#     :path => config[:reactNativePath],
+#     :flipper_configuration => flipper_config,
+#     :app_path => "#{Pod::Config.instance.installation_root}/.."
+#   )
+
+#   target 'TrialAppTests' do
+#     inherit! :complete
+#   end
+
+#   post_install do |installer|
+#     react_native_post_install(
+#       installer,
+#       config[:reactNativePath],
+#       mac_catalyst_enabled: false
+#     )
+
+#     installer.pods_project.targets.each do |target|
+#       target.build_configurations.each do |config|
+#         config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
+
+#         if target.name == 'Flipper-Folly'
+#           config.build_settings['HEADER_SEARCH_PATHS'] ||= '$(inherited)'
+#           config.build_settings['HEADER_SEARCH_PATHS'] << ' $(PODS_ROOT)/Flipper-Folly/folly'
+#         end
+
+#         if target.name == 'libevent'
+#           config.build_settings['HEADER_SEARCH_PATHS'] ||= '$(inherited)'
+#           config.build_settings['HEADER_SEARCH_PATHS'] << ' $(PODS_ROOT)/libevent/event2'
+#         end
+#       end
+#     end
+#   end
+# end

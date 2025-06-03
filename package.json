@@ -17,6 +17,7 @@
     "react-airplay": "^1.2.0",
     "react-native": "0.73.11",
     "react-native-carplay": "^2.4.1-beta.0",
+    "react-native-google-cast": "4.6.1",
     "react-native-video": "^6.14.1"
   },
   "devDependencies": {
