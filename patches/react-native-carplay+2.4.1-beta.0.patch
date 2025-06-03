@@ -1,0 +1,214 @@
+diff --git a/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/CarPlayModule.kt b/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/CarPlayModule.kt
+index ef6aa04..0662ce3 100644
+--- a/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/CarPlayModule.kt
++++ b/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/CarPlayModule.kt
+@@ -118,6 +118,9 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
+ 
+   @ReactMethod
+   fun updateTemplate(templateId: String, config: ReadableMap) {
++    Log.d(TAG, "templateId=-=-=-=-=")
++    Log.d(TAG, templateId)
++
+     handler.post {
+       carTemplates[templateId] = config;
+       val screen = carScreens[name]
+@@ -187,6 +190,10 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
+ 
+   @ReactMethod
+   fun toast(text: String, duration: Int) {
++    if (!::carContext.isInitialized) {
++      Log.e(TAG, "carContext is not initialized. Cannot show toast.")
++      return
++    }
+     CarToast.makeText(carContext, text, duration).show()
+   }
+ 
+@@ -270,7 +277,12 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
+     return CarScreenContext(templateId, EventEmitter(reactContext, templateId), carScreens)
+   }
+ 
++  @ReactMethod
+   private fun createScreen(templateId: String): CarScreen? {
++    if (!::carContext.isInitialized) {
++        Log.e(TAG, "carContext not initialized")
++        return null
++    }
+     val config = carTemplates[templateId];
+     if (config != null) {
+       val screen = CarScreen(carContext)
+diff --git a/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/CarPlaySession.kt b/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/CarPlaySession.kt
+index 2235853..78c6e7e 100644
+--- a/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/CarPlaySession.kt
++++ b/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/CarPlaySession.kt
+@@ -42,7 +42,7 @@ class CarPlaySession(private val reactInstanceManager: ReactInstanceManager) : S
+           invokeStartTask(reactInstanceManager.currentReactContext!!);
+         }
+       }
+-    }, IntentFilter("org.birkir.carplay.APP_RELOAD"))
++    }, IntentFilter("org.birkir.carplay.APP_RELOAD"),Context.RECEIVER_EXPORTED)
+ 
+     // Run JS
+     runJsApplication()
+diff --git a/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/parser/RCTTemplate.kt b/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/parser/RCTTemplate.kt
+index 01dbabd..2489bf7 100644
+--- a/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/parser/RCTTemplate.kt
++++ b/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/parser/RCTTemplate.kt
+@@ -84,6 +84,18 @@ abstract class RCTTemplate(
+     // @todo implement CarColor.createCustom(light: 0x00, dark: 0x00)
+     // maybe use react native tooling for this
+ 
++    if (colorName != null && colorName.startsWith("custom:")) {
++        val hexColor = colorName.substringAfter("custom:")
++        return try {
++            // Convert hex string to an integer
++            val colorValue = hexColor.toInt(16) // Convert hex to Int
++            // Assuming you want to create a custom color with the same value for light and dark
++            CarColor.createCustom(colorValue, colorValue)
++        } catch (e: NumberFormatException) {
++            CarColor.DEFAULT // Fallback to default if parsing fails
++        }
++    }
++
+     return when (colorName) {
+       "blue" -> CarColor.BLUE
+       "green" -> CarColor.GREEN
+diff --git a/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/screens/CarScreen.kt b/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/screens/CarScreen.kt
+index 1ae84b1..ba8dfbc 100644
+--- a/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/screens/CarScreen.kt
++++ b/node_modules/react-native-carplay/android/src/main/java/org/birkir/carplay/screens/CarScreen.kt
+@@ -59,7 +59,7 @@ class CarScreen(carContext: CarContext) : Screen(carContext) {
+     Log.d(TAG, "onGetTemplate for $marker")
+     return template ?: PaneTemplate.Builder(
+       Pane.Builder().setLoading(true).build()
+-    ).setTitle("RNCarPlay loading...").build()
++    ).setTitle("Jazz Groove loading...").build()
+     // @todo allow set the loading title by translatable resource.
+   }
+ 
+diff --git a/node_modules/react-native-carplay/ios/RNCarPlay.m b/node_modules/react-native-carplay/ios/RNCarPlay.m
+index 153dbad..9ac92d5 100644
+--- a/node_modules/react-native-carplay/ios/RNCarPlay.m
++++ b/node_modules/react-native-carplay/ios/RNCarPlay.m
+@@ -299,47 +299,87 @@ - (void)updateListRowItemImageWithURL:(CPListImageRowItem *)item imgUrl:(NSStrin
+         carPlayTemplate = voiceTemplate;
+     } else if ([type isEqualToString:@"nowplaying"]) {
+         CPNowPlayingTemplate *nowPlayingTemplate = [CPNowPlayingTemplate sharedTemplate];
+-        [nowPlayingTemplate setAlbumArtistButtonEnabled:[RCTConvert BOOL:config[@"albumArtistButtonEnabled"]]];
+-        [nowPlayingTemplate setUpNextTitle:[RCTConvert NSString:config[@"upNextButtonTitle"]]];
+-        [nowPlayingTemplate setUpNextButtonEnabled:[RCTConvert BOOL:config[@"upNextButtonEnabled"]]];
+-        NSMutableArray<CPNowPlayingButton *> *buttons = [NSMutableArray new];
+-        NSArray<NSDictionary*> *_buttons = [RCTConvert NSDictionaryArray:config[@"buttons"]];
+-        
+-        NSDictionary *buttonTypeMapping = @{
+-            @"shuffle": CPNowPlayingShuffleButton.class,
+-            @"add-to-library": CPNowPlayingAddToLibraryButton.class,
+-            @"more": CPNowPlayingMoreButton.class,
+-            @"playback": CPNowPlayingPlaybackRateButton.class,
+-            @"repeat": CPNowPlayingRepeatButton.class,
+-            @"image": CPNowPlayingImageButton.class
+-        };
+         
+-        for (NSDictionary *_button in _buttons) {
+-            NSString *buttonType = [RCTConvert NSString:_button[@"type"]];
+-            NSDictionary *body = @{@"templateId":templateId, @"id": _button[@"id"] };
+-            Class buttonClass = buttonTypeMapping[buttonType];
+-            if (buttonClass) {
+-                CPNowPlayingButton *button;
+-                
+-                if ([buttonType isEqualToString:@"image"]) {
+-                    UIImage *_image = [RCTConvert UIImage:[_button objectForKey:@"image"]];
+-                    button = [[CPNowPlayingImageButton alloc] initWithImage:_image handler:^(__kindof CPNowPlayingImageButton * _Nonnull) {
+-                        if (self->hasListeners) {
+-                            [self sendEventWithName:@"buttonPressed" body:body];
+-                        }
+-                    }];
+-                } else {
+-                    button = [[buttonClass alloc] initWithHandler:^(__kindof CPNowPlayingButton * _Nonnull) {
+-                        if (self->hasListeners) {
+-                            [self sendEventWithName:@"buttonPressed" body:body];
++        // Safely set template properties with nil checks
++        if (config[@"albumArtistButtonEnabled"] != nil) {
++            [nowPlayingTemplate setAlbumArtistButtonEnabled:[RCTConvert BOOL:config[@"albumArtistButtonEnabled"]]];
++        }
++        if (config[@"upNextButtonTitle"] != nil) {
++            [nowPlayingTemplate setUpNextTitle:[RCTConvert NSString:config[@"upNextButtonTitle"]]];
++        }
++        if (config[@"upNextButtonEnabled"] != nil) {
++            [nowPlayingTemplate setUpNextButtonEnabled:[RCTConvert BOOL:config[@"upNextButtonEnabled"]]];
++        }
++        
++        // Check if buttons array exists
++        if (config[@"buttons"] != nil) {
++            NSMutableArray<CPNowPlayingButton *> *buttons = [NSMutableArray new];
++            NSArray<NSDictionary *> *_buttons = [RCTConvert NSDictionaryArray:config[@"buttons"]];
++            
++            NSDictionary *buttonTypeMapping = @{
++                @"shuffle": CPNowPlayingShuffleButton.class,
++                @"add-to-library": CPNowPlayingAddToLibraryButton.class,
++                @"more": CPNowPlayingMoreButton.class,
++                @"playback": CPNowPlayingPlaybackRateButton.class,
++                @"repeat": CPNowPlayingRepeatButton.class,
++                @"image": CPNowPlayingImageButton.class
++            };
++            
++            for (NSDictionary *_button in _buttons) {
++                if (!_button[@"type"] || !_button[@"id"]) {
++                    NSLog(@"Button missing required properties");
++                    continue;
++                }
++                
++                NSString *buttonType = [RCTConvert NSString:_button[@"type"]];
++                NSDictionary *body = @{@"templateId": templateId, @"id": _button[@"id"]};
++                
++                Class buttonClass = buttonTypeMapping[buttonType];
++                if (buttonClass == nil) {
++                    NSLog(@"Invalid button type: %@", buttonType);
++                    continue;
++                }
++                
++                @try {
++                    CPNowPlayingButton *button;
++                    if ([buttonType isEqualToString:@"image"]) {
++                        UIImage *_image = [RCTConvert UIImage:[_button objectForKey:@"image"]];
++                        if (!_image) {
++                            NSLog(@"Invalid image data for button: %@", _button);
++                            continue;
+                         }
+-                    }];
++                        button = [[CPNowPlayingImageButton alloc] initWithImage:_image handler:^(__kindof CPNowPlayingImageButton * _Nonnull) {
++                            if (self->hasListeners) {
++                                [self sendEventWithName:@"buttonPressed" body:body];
++                            }
++                        }];
++                    } else {
++                        button = [[buttonClass alloc] initWithHandler:^(__kindof CPNowPlayingButton * _Nonnull) {
++                            if (self->hasListeners) {
++                                [self sendEventWithName:@"buttonPressed" body:body];
++                            }
++                        }];
++                    }
++                    if (button) {
++                        [buttons addObject:button];
++                    }
++                } @catch (NSException *exception) {
++                    NSLog(@"Error creating button: %@", exception);
++                    continue;
+                 }
++            }
+             
+-                [buttons addObject:button];
++            if (buttons.count > 0) {
++                @try {
++                    [nowPlayingTemplate updateNowPlayingButtons:buttons];
++                } @catch (NSException *exception) {
++                    NSLog(@"Error updating now playing buttons: %@", exception);
++                }
++            } else {
++                NSLog(@"No valid buttons to update.");
+             }
+         }
+-        [nowPlayingTemplate updateNowPlayingButtons:buttons];
++        
+         carPlayTemplate = nowPlayingTemplate;
+     } else if ([type isEqualToString:@"tabbar"]) {
+         CPTabBarTemplate *tabBarTemplate = [[CPTabBarTemplate alloc] initWithTemplates:[self parseTemplatesFrom:config]];

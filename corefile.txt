@@ -1,0 +1,317 @@
+// import React, { useRef, useState, useEffect } from 'react';
+// import { View, Button, StyleSheet, Text, ScrollView, TouchableOpacity } from 'react-native';
+// import Video from 'react-native-video';
+// import createListTemplate from './src/templates/list';
+// import  {CarPlay}  from 'react-native-carplay';
+
+
+// const testAudio1 = require('./Audio-1.mp3');
+// const testAudio2 = require('./Audio-2.mp3');
+// const App = () => { 
+//   const startOnSecondsLeft = 25;
+//   const [player1Volume, setPlayer1Volume] = useState(1);
+//   const [player2Volume, setPlayer2Volume] = useState(0);
+//   const [duration, setDuration] = useState(0);
+//   const [isPlaying1, setIsPlaying1] = useState(false);
+//   const [isPlaying2, setIsPlaying2] = useState(false);
+//   // const [carPlayConnected, setCarPlayConnected] = useState(CarPlay.connected);
+
+//   const playerRef = useRef(null);
+//   const playerRef2 = useRef(null);
+//   const checkFlag = useRef(false);
+
+//   const handleLoad = (data) => {
+//     console.log('Video loaded with duration:', data.duration);
+//     setDuration(data.duration);
+//   };
+
+//   const handleProgress = (audioFile) => {
+//     const audioDuration = Math.ceil(audioFile.seekableDuration);
+//     const currentTime = Math.ceil(audioFile.currentTime);
+    
+//     if (audioDuration - currentTime < startOnSecondsLeft && checkFlag.current) {
+//       if (playerRef2.current) {
+//         playerRef2.current.resume();
+//         setIsPlaying2(true);
+//       }
+      
+//       // Calculate fade percentage
+//       const percentage = ((currentTime - (audioDuration - startOnSecondsLeft)) / startOnSecondsLeft);
+//       const clammedPercentage = Math.max(0, Math.min(percentage, 1));
+//       console.log('Fade percentage:', percentage);
+//       console.log('Current time:', currentTime);
+//       console.log('Duration:', audioDuration);
+//       setPlayer2Volume(percentage);
+//       setPlayer1Volume(1 - clammedPercentage);
+//     }
+//   };
+
+//   const togglePlayPause1 = async () => {
+//     if (playerRef.current) {
+//       if (isPlaying1) {
+//         await playerRef.current.pause();
+//       } else {
+//         await playerRef.current.resume();
+//       }
+//       setIsPlaying1(!isPlaying1);
+//     }
+//   };
+
+//   const togglePlayPause2 = async () => {
+//     if (playerRef2.current) {
+//       if (isPlaying2) {
+//         await playerRef2.current.pause();
+//       } else {
+//         await playerRef2.current.resume();
+//       }
+//       setIsPlaying2(!isPlaying2);
+//     }
+//   };
+
+//   useEffect(() => {
+//     console.log('useEffect running');
+//     const initializeAudio = async () => {
+//       try {
+//         if (playerRef.current && duration > 0) {
+//           console.log('Player ref exists');
+//           console.log('Duration:', duration);
+          
+//           await playerRef.current.seek(duration);
+//           await playerRef.current.resume();
+//           setIsPlaying1(true);
+          
+//           setTimeout(async () => {
+//             await playerRef.current.seek(0);
+//             await playerRef.current.resume();
+//             setIsPlaying1(true);
+//             checkFlag.current = true;
+//             console.log('Audio initialized');
+//           }, 500);
+//         } else {
+//           console.log('Player ref not ready or duration not available');
+//         }
+//       } catch (error) {
+//         console.error('Error in audio initialization:', error);
+//       }
+//     };
+
+//     if (playerRef2.current) {
+//       playerRef2.current.pause();
+//       setIsPlaying2(false);
+//       checkFlag.current = false;
+//       initializeAudio();
+//     }
+//   }, [duration, playerRef2.current, playerRef.current]);
+//   useEffect(() => {
+//     if (!CarPlay) {
+//       console.warn('CarPlay module not found');
+//       return;
+//     }
+  
+//     if (!CarPlay.connected) {
+//       console.log('CarPlay not connected yet');
+//     }
+  
+//     const onConnect = ({ interfaceController, window }) => {
+//       console.log('CarPlay connected');
+//       createListTemplate(); // sets the root template
+//     };
+  
+//     const onDisconnect = () => {
+//       console.log('CarPlay disconnected');
+//     };
+  
+//     CarPlay.registerOnConnect(onConnect);
+//     CarPlay.registerOnDisconnect(onDisconnect);
+  
+//     return () => {
+//       CarPlay.unregisterOnConnect(onConnect);
+//       CarPlay.unregisterOnDisconnect(onDisconnect);
+//     };
+//   }, []);
+  
+  
+//   // useEffect(() => {
+//   //   const listener = CarPlay.addListener('connect', ({ interfaceController, window }) => {
+//   //     console.log('CarPlay connected');
+//   //     createListTemplate(); // your function to set root template
+//   //   });
+
+//   //   return () => {
+//   //     listener?.remove?.();
+//   //   };
+//   // }, []);
+//   // useEffect(() => {
+//   //   CarPlay.registerOnConnect(onConnect);
+//   //   return () => {
+//   //     CarPlay.unregisterOnConnect(onConnect);
+//   //   };
+//   // });
+  
+//   // // imperative
+//   // CarPlay.registerOnConnect(() => {
+//   //   CarPlay.setRootTemplate(/* template */);
+//   // });
+
+
+
+//   return (
+//     <View style={styles.container}>
+//       <View style={styles.playerContainer}>
+//         <View style={styles.videoWrapper}>
+//           <Text style={styles.videoTitle}>First Audio</Text>
+//           <Video
+//             source={testAudio1}
+//             ref={playerRef}
+//             audioOnly={true}
+//             onProgress={handleProgress}
+//             onLoad={handleLoad}
+//             volume={player1Volume}
+//             muted={false}
+//             autoPlay={false}
+//             controls={true}
+//             onError={(e) => console.log('Video error:', e)}
+//             onBuffer={(e) => console.log('Buffering:', e)}
+//             style={styles.hiddenVideo}
+//             onPlay={() => setIsPlaying1(true)}
+//             onPause={() => setIsPlaying1(false)}
+//             onEnd={() => setIsPlaying1(false)}
+//           />
+//           <View style={styles.controlsContainer}>
+//             <TouchableOpacity 
+//               style={[styles.button, isPlaying1 && styles.buttonActive]} 
+//               onPress={togglePlayPause1}
+//             >
+//               <Text style={styles.buttonText}>{isPlaying1 ? 'Pause' : 'Play'}</Text>
+//             </TouchableOpacity>
+//             <View style={styles.volumeDisplay}>
+//               <Text style={styles.volumeText}>Volume:{(player1Volume * 100).toFixed(0)}%</Text>
+//             </View>
+//           </View>
+//         </View>
+
+//         <View style={styles.videoWrapper}>
+//           <Text style={styles.videoTitle}>Second Audio</Text>
+//           <Video
+//             source={testAudio2}
+//             ref={playerRef2}
+//             volume={player2Volume}
+//             audioOnly={true}
+//             muted={false}
+//             controls={true}
+//             autoPlay={true}
+//             onError={(e) => console.log('Video error:', e)}
+//             onBuffer={(e) => console.log('Buffering:', e)}
+//             style={styles.hiddenVideo}
+//             onPlay={() => setIsPlaying2(true)}
+//             onPause={() => setIsPlaying2(false)}
+//             onEnd={() => setIsPlaying2(false)}
+//           />
+//           <View style={styles.controlsContainer}>
+//             <TouchableOpacity 
+//               style={[styles.button, !isPlaying2 && styles.buttonActive]} 
+//               onPress={togglePlayPause2}
+//             >
+//               <Text style={styles.buttonText}>{isPlaying2 ? 'Pause' : 'Play'}</Text>
+//             </TouchableOpacity>
+//             <View style={styles.volumeDisplay}>
+//               <Text style={styles.volumeText}>Volume: {(player2Volume * 100).toFixed(0)}%</Text>
+//             </View>
+//           </View>
+//         </View>
+//       </View>
+//     </View>
+    
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: '#F8F9FA',
+//     paddingTop: 40,
+//     paddingBottom: 60,
+//   },
+//   playerContainer: {
+//     flex: 1,
+//     justifyContent: 'space-between',
+//     alignItems: 'center',
+//     paddingHorizontal: 20,
+//   },
+//   videoWrapper: {
+//     width: '100%',
+//     alignItems: 'center',
+//     backgroundColor: '#FFFFFF',
+//     padding: 20,
+//     borderRadius: 20,
+//     shadowColor: '#000',
+//     shadowOffset: {
+//       width: 0,
+//       height: 4,
+//     },
+//     shadowOpacity: 0.1,
+//     shadowRadius: 8,
+//     elevation: 5,
+//   },
+//   videoTitle: {
+//     fontSize: 20,
+//     fontWeight: '600',
+//     color: '#333333',
+//     marginBottom: 15,
+//   },
+//   hiddenVideo: {
+//     height: 240,
+//     width: 240,
+//     backgroundColor: '#000000',
+//     borderRadius: 15,
+//   },
+//   controlsContainer: {
+//     width: '100%',
+//     flexDirection: 'row',
+//     justifyContent: 'space-between',
+//     alignItems: 'center',
+//     marginTop: 15,
+//     paddingHorizontal: 20,
+//   },
+//   volumeDisplay: {
+//     padding: 10,
+//     backgroundColor: 'rgba(0,0,0,0.05)',
+//     borderRadius: 15,
+//     minWidth: 120,
+//     alignItems: 'center',
+//   },
+//   volumeText: {
+//     color: '#333333',
+//     fontSize: 16,
+//     fontWeight: '500',
+//   },
+//   button: {
+//     backgroundColor: '#007AFF',
+//     paddingVertical: 12,
+//     paddingHorizontal: 30,
+//     borderRadius: 25,
+//     minWidth: 120,
+//     alignItems: 'center',
+//     shadowColor: '#007AFF',
+//     shadowOffset: {
+//       width: 0,
+//       height: 2,
+//     },
+//     shadowOpacity: 0.2,
+//     shadowRadius: 3.84,
+//     elevation: 5,
+//   },
+//   buttonActive: {
+//     backgroundColor: '#0055CC',
+//   },
+//   buttonText: {
+//     color: 'white',
+//     fontSize: 16,
+//     fontWeight: '600',
+//   },
+//   firstVideoButton: {
+//     marginTop: 20,
+//   },
+// });
+
+// export default App;
