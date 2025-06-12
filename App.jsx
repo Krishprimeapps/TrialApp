@@ -161,6 +161,28 @@ const App = () => {
     }
   
   };
+  useEffect(() => { 
+    if (!CarPlay.connected) {
+      console.log('CarPlay not connected yet');
+    }
+  
+    const onConnect = ({ interfaceController, window }) => {
+      console.log('CarPlay connected');
+      createListTemplate();
+    };
+  
+    const onDisconnect = () => {
+      console.log('CarPlay disconnected');
+    };
+  
+    CarPlay.registerOnConnect(onConnect);
+    CarPlay.registerOnDisconnect(onDisconnect);
+  
+    return () => {
+      CarPlay.unregisterOnConnect(onConnect);
+      CarPlay.unregisterOnDisconnect(onDisconnect);
+    };
+  }, [CarPlay]);
 
   useEffect(() => {
 
@@ -309,29 +331,6 @@ const App = () => {
     };
   }, [duration]);
   
-  
-  useEffect(() => { 
-        if (!CarPlay.connected) {
-          console.log('CarPlay not connected yet');
-        }
-      
-        const onConnect = ({ interfaceController, window }) => {
-          console.log('CarPlay connected');
-          createListTemplate();
-        };
-      
-        const onDisconnect = () => {
-          console.log('CarPlay disconnected');
-        };
-      
-        CarPlay.registerOnConnect(onConnect);
-        CarPlay.registerOnDisconnect(onDisconnect);
-      
-        return () => {
-          CarPlay.unregisterOnConnect(onConnect);
-          CarPlay.unregisterOnDisconnect(onDisconnect);
-        };
-      }, [CarPlay]);
 
       useEffect(() => {
         let interval;
