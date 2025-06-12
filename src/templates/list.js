@@ -26,12 +26,14 @@ export default function createListTemplate() {
     onButtonPressed: e =>{
       if (e.id === 'Play'){
         CarPlay.pushTemplate(template1)
-        CarPlay.enableNowPlaying(true);
+        CarPlay.bridge.enableNowPlaying(true);
       }
     }
   })
   
     CarPlay.setRootTemplate(template);
+
+    return template1;
     
 }
   // const template = new ListTemplate({
