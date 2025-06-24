@@ -13,11 +13,12 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		4BA600FF2DE440370055D30D /* CarSceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4BA600FE2DE440370055D30D /* CarSceneDelegate.m */; };
 		4BA601022DE440470055D30D /* PhoneSceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4BA601012DE440470055D30D /* PhoneSceneDelegate.m */; };
+		4BC9E4872DFC24FC009ADEDE /* NowPlayingManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 4BC9E4862DFC24FC009ADEDE /* NowPlayingManager.m */; };
 		4BE292F82DE9C5CE00E8D787 /* dummy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE292F72DE9C5C000E8D787 /* dummy.swift */; };
 		6132EF182BDFF13200BBE14D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 6132EF172BDFF13200BBE14D /* PrivacyInfo.xcprivacy */; };
-		6D1F87E7BDE050EB841BFAB3 /* libPods-TrialApp-TrialAppTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E98C1281A8B6234699DBE642 /* libPods-TrialApp-TrialAppTests.a */; };
+		6C2BC628475D95016330666F /* libPods-TrialApp-TrialAppTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 674CEF73071927F9F10A8E1C /* libPods-TrialApp-TrialAppTests.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		8CBE93EDF33EA40EEAEC663B /* libPods-TrialApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8FEB9E34BFFD11EA6827A5EA /* libPods-TrialApp.a */; };
+		DC460BBB74845B8B849A2B16 /* libPods-TrialApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 61ABE9F5186B096BD26C1C17 /* libPods-TrialApp.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,16 +48,16 @@
 		4BA600FE2DE440370055D30D /* CarSceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CarSceneDelegate.m; sourceTree = "<group>"; };
 		4BA601002DE4403E0055D30D /* PhoneSceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PhoneSceneDelegate.h; sourceTree = "<group>"; };
 		4BA601012DE440470055D30D /* PhoneSceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PhoneSceneDelegate.m; sourceTree = "<group>"; };
-		4BBB2CC02DE83B71005E795A /* CarPlayEventEmitter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CarPlayEventEmitter.m; sourceTree = "<group>"; };
-		4BBB2CC22DE83B80005E795A /* CarPlayEventEmitter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CarPlayEventEmitter.h; sourceTree = "<group>"; };
+		4BC9E4852DFC24FC009ADEDE /* NowPlayingManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NowPlayingManager.h; sourceTree = "<group>"; };
+		4BC9E4862DFC24FC009ADEDE /* NowPlayingManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NowPlayingManager.m; sourceTree = "<group>"; };
 		4BE292F72DE9C5C000E8D787 /* dummy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = dummy.swift; sourceTree = "<group>"; };
 		4BE292F92DE9C5D200E8D787 /* TrialApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TrialApp-Bridging-Header.h"; sourceTree = "<group>"; };
 		6132EF172BDFF13200BBE14D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = TrialApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		61ABE9F5186B096BD26C1C17 /* libPods-TrialApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-TrialApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		674CEF73071927F9F10A8E1C /* libPods-TrialApp-TrialAppTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-TrialApp-TrialAppTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = TrialApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		8FEB9E34BFFD11EA6827A5EA /* libPods-TrialApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-TrialApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C62A18B4D07C698CA9F41E7D /* Pods-TrialApp-TrialAppTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TrialApp-TrialAppTests.debug.xcconfig"; path = "Target Support Files/Pods-TrialApp-TrialAppTests/Pods-TrialApp-TrialAppTests.debug.xcconfig"; sourceTree = "<group>"; };
 		E02D75AA8785AFFC3B77FA1B /* Pods-TrialApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TrialApp.release.xcconfig"; path = "Target Support Files/Pods-TrialApp/Pods-TrialApp.release.xcconfig"; sourceTree = "<group>"; };
-		E98C1281A8B6234699DBE642 /* libPods-TrialApp-TrialAppTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-TrialApp-TrialAppTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F53C972CF786B7A0D752E2E0 /* Pods-TrialApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TrialApp.debug.xcconfig"; path = "Target Support Files/Pods-TrialApp/Pods-TrialApp.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -66,7 +67,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6D1F87E7BDE050EB841BFAB3 /* libPods-TrialApp-TrialAppTests.a in Frameworks */,
+				6C2BC628475D95016330666F /* libPods-TrialApp-TrialAppTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,7 +75,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8CBE93EDF33EA40EEAEC663B /* libPods-TrialApp.a in Frameworks */,
+				DC460BBB74845B8B849A2B16 /* libPods-TrialApp.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -117,8 +118,8 @@
 			children = (
 				4B574B8E2DE88826004DE0F0 /* libProtobuf.a */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				8FEB9E34BFFD11EA6827A5EA /* libPods-TrialApp.a */,
-				E98C1281A8B6234699DBE642 /* libPods-TrialApp-TrialAppTests.a */,
+				61ABE9F5186B096BD26C1C17 /* libPods-TrialApp.a */,
+				674CEF73071927F9F10A8E1C /* libPods-TrialApp-TrialAppTests.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -133,9 +134,9 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				4BC9E4852DFC24FC009ADEDE /* NowPlayingManager.h */,
+				4BC9E4862DFC24FC009ADEDE /* NowPlayingManager.m */,
 				4BE292F72DE9C5C000E8D787 /* dummy.swift */,
-				4BBB2CC22DE83B80005E795A /* CarPlayEventEmitter.h */,
-				4BBB2CC02DE83B71005E795A /* CarPlayEventEmitter.m */,
 				4BA601012DE440470055D30D /* PhoneSceneDelegate.m */,
 				4BA601002DE4403E0055D30D /* PhoneSceneDelegate.h */,
 				4BA600FE2DE440370055D30D /* CarSceneDelegate.m */,
@@ -420,6 +421,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
+				4BC9E4872DFC24FC009ADEDE /* NowPlayingManager.m in Sources */,
 				4BE292F82DE9C5CE00E8D787 /* dummy.swift in Sources */,
 				4BA600FF2DE440370055D30D /* CarSceneDelegate.m in Sources */,
 				4BA601022DE440470055D30D /* PhoneSceneDelegate.m in Sources */,
@@ -500,7 +502,7 @@
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = 3QMS4TTS88;
 				ENABLE_BITCODE = NO;
-				HEADER_SEARCH_PATHS = "$(inherited)";
+				HEADER_SEARCH_PATHS = "$(inherited)/**";
 				INFOPLIST_FILE = TrialApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -532,7 +534,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = "";
-				HEADER_SEARCH_PATHS = "$(inherited)";
+				HEADER_SEARCH_PATHS = "$(inherited)/**";
 				INFOPLIST_FILE = TrialApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -633,7 +635,10 @@
 					"-DFOLLY_USE_LIBCPP=1",
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -712,7 +717,10 @@
 					"-DFOLLY_USE_LIBCPP=1",
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

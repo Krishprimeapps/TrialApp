@@ -1,18 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView,Button, AppState  } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView,Button, AppState ,Platform } from 'react-native';
 import Video from 'react-native-video';
 import GoogleCast, { CastButton, useCastState, CastState,useRemoteMediaClient , useCastSession } from 'react-native-google-cast';
-import { PermissionsAndroid, Platform } from 'react-native';
 import createListTemplate from './src/templates/list';
 import { CarPlay } from 'react-native-carplay';
-import { NativeModules, NativeEventEmitter } from 'react-native';
-import {
-  AirplayButton,
-  useAirplayConnectivity,
-  useExternalPlaybackAvailability,
-  useAvAudioSessionRoutes,
-} from 'react-airplay';
-
+import { NativeModules, NativeEventEmitter, DeviceEventEmitter } from 'react-native';
+import { AirplayButton,useAirplayConnectivity,useExternalPlaybackAvailability,useAvAudioSessionRoutes,} from 'react-airplay';
 
 
 const testAudio1 = require('./Audio-1.mp3');
@@ -21,6 +14,7 @@ const testAudio2 = require('./Audio-2.mp3');
 const REMOTE_AUDIO_1 = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'; 
 const REMOTE_AUDIO_2 = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3';
 
+
 const App = () => { 
   const isAirplayConnected = useAirplayConnectivity();
   const isExternalPlaybackAvailable = useExternalPlaybackAvailability();
@@ -28,21 +22,28 @@ const App = () => {
   const startOnSecondsLeft = 25;
   const castState = useCastState();
   const client = useRemoteMediaClient();
+  const isCrossfading = isPlaying1 && isPlaying2;
+  const { NowPlayingManager } = NativeModules;
   // const googleCastEmitter = new NativeEventEmitter(GoogleCast);
+
   
   const [player1Volume, setPlayer1Volume] = useState(1);
   const [player2Volume, setPlayer2Volume] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [duration2 , setDuration2] = useState(0);
   const [isPlaying1, setIsPlaying1] = useState(false);
   const [isPlaying2, setIsPlaying2] = useState(false);
   const [currentTime,setCurrentTime] = useState(0);
   const [castStreamPosition, setCastStreamPosition] = useState(0);
   const [currentCastItem, setCurrentCastItem] = useState(null);
-  const [appState, setAppState] = useState(AppState.currentState);
   const [lastPlay,setLastPlay]= useState(0);
+  const [audio1Position,setAudio1Position] = useState(0);
+  const [audio2Position,setAudio2Position] = useState(0);
+  const [nowPlayingTrack, setNowPlayingTrack] = useState(null); 
+  const [isCarPlayConnected, setIsCarPlayConnected] = useState(false);
+  const [appState, setAppState] = useState(AppState.currentState);
+  const [startingTime,setStartingTime] = useState(0);
 
-  
- 
 
   const playerRef = useRef(null);
   const playerRef2 = useRef(null);
@@ -51,29 +52,29 @@ const App = () => {
   const currentTimeRef = useRef(0);
   const prevCastStateRef = useRef(castState);
   const isCastingRef = useRef(false);
+  const carPlayEventHandled = useRef(false);
 
-
-  const onCrossfadeComplete = () => {
-    // console.log('Crossfade complete — switching CarPlay control to audio 2');
+  
+//This is the function responsible for loading media in the video component
+  const handleLoad = (data) => {
+    setDuration(data.duration);  
   };
+  const handle2Load = (data) =>{
+    setDuration2(data.duration);
 
-
+  }
+//This is the handleprogress which is called in the onProgress of the video comoponent The crossfade volume logic lies here
   const handleProgress = (audioFile) => {
     const audioDuration = Math.ceil(audioFile.seekableDuration);
     const currentTime = Math.ceil(audioFile.currentTime);
     currentTimeRef.current = currentTime;
     setCurrentTime(currentTime);
-    
-    
-    if (isPlaying1){
-      activePlayerRef.current = 1;
-      setLastPlay(1);
+    if(isPlaying1){
+      setAudio1Position(currentTime);
     }
-    else if(isPlaying2){
-      activePlayerRef.current = 2;
-      setLastPlay(2);
-    }
-    
+    if(isPlaying2){
+      setAudio2Position(currentTime);
+    }    
     if (isAirplayConnected) {
       if (currentTime >= audioDuration) {
         if (playerRef.current) {
@@ -84,7 +85,7 @@ const App = () => {
         if (playerRef2.current) {
           playerRef2.current.seek(0); 
           playerRef2.current.resume();
-           setIsPlaying2(true);
+          setIsPlaying2(true);
           setPlayer2Volume(1.0);
           setPlayer1Volume(0);
           activePlayerRef.current = 2;
@@ -92,24 +93,109 @@ const App = () => {
         }
       }
     } 
-    
-    else if (audioDuration - currentTime < startOnSecondsLeft && checkFlag.current) {
+     if(Platform.OS === 'ios'){
+      if ((isAirplayConnected || isCarPlayConnected)) return;
+     }
+
+     if(audioDuration - currentTime < startOnSecondsLeft && checkFlag.current){
+      if (playerRef.current){
+        playerRef.current.resume();
+        setIsPlaying1(true);
+      }
       if (playerRef2.current) {
         playerRef2.current.resume();
          setIsPlaying2(true);
-        onCrossfadeComplete();
       }
 
       const percentage = (currentTime - (audioDuration - startOnSecondsLeft)) / startOnSecondsLeft;
       const clampedPercentage = Math.min(Math.max(percentage, 0), 1);
       setPlayer2Volume(clampedPercentage);
       setPlayer1Volume(1 - clampedPercentage);
+      if(Platform.OS === 'ios'){
+        if(clampedPercentage >=1){
+          checkFlag.current = false;
+          if(isPlaying1) {setIsPlaying1(false);}
+          if(playerRef.current){
+            playerRef.current.pause();
+            playerRef.current.seek(0);
+          }
+          return;
+        }
+
+      } 
     }
   };
-  const handleLoad = (data) => {
-    setDuration(data.duration);
-  };
+
+  useEffect(() => {
+    if (!isAirplayConnected && checkFlag.current) {
+      if (playerRef.current && !isPlaying1) {
+        playerRef.current.resume();
+        setIsPlaying1(true);
+      }
+      if (playerRef2.current && !isPlaying2) {
+        playerRef2.current.resume();
+        setIsPlaying2(true);
+      }
+    }
+  }, [isAirplayConnected]);
   
+//This is responsible for sending progress updates to ios system through custom native bridge made from native side 
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    const interval = setInterval(() => {
+      if (isPlaying1 && (!isPlaying2 || activePlayerRef.current === 1)) {
+        NowPlayingManager.setPlaybackPosition(audio1Position, duration);
+      } else if (isPlaying2 && (!isPlaying1 || activePlayerRef.current === 2)) {
+        NowPlayingManager.setPlaybackPosition(audio2Position, duration2);
+      }
+    }, 500); 
+  
+    return () => clearInterval(interval);
+  }, [isPlaying1, isPlaying2, audio1Position, audio2Position, duration,duration2]);
+
+//This is responsible for sending metadata to ios system through custom native bridge made from native side 
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+  
+    let mainTrack = null;
+    if (isPlaying1 && (!isPlaying2 || activePlayerRef.current === 1)) {
+      mainTrack = 'audio1';
+    } else if (isPlaying2 && (!isPlaying1 || activePlayerRef.current === 2)) {
+      mainTrack = 'audio2';
+    }
+  
+    if (mainTrack && mainTrack !== nowPlayingTrack) {
+      if (mainTrack === 'audio1') {
+        NowPlayingManager.setNowPlayingInfo(
+          'Sample Audio-1',
+          'Artist-1',
+          'https://assets.jazzgroove.org/sonos/Mix1.jpg'
+        );
+      } else if (mainTrack === 'audio2') {
+        NowPlayingManager.setNowPlayingInfo(
+          'Sample Audio-2',
+          'Artist-2',
+          'https://assets.jazzgroove.org/sonos/Dreams.jpg'
+        );
+      }
+      setNowPlayingTrack(mainTrack);
+    }
+  }, [isPlaying1, isPlaying2, activePlayerRef.current]);
+  //This is to set last play used to check what player was playing recently 
+
+  useEffect(() =>{
+    if(isCrossfading)return;
+    if(isPlaying1 && !isPlaying2){
+      activePlayerRef.current = 1;
+      setLastPlay(1);
+    }
+    if(isPlaying2 && !isPlaying1){
+      activePlayerRef.current = 2;
+      setLastPlay(2);
+    }
+  },[isPlaying1,isPlaying2])
+  //This configures the play pause button for the first player
+   
   const togglePlayPause1 = async () => {
     if (castState === CastState.CONNECTED) {
       const status = await client.getMediaStatus();
@@ -126,15 +212,17 @@ const App = () => {
       }
     }
     else{
-      if (isPlaying1) playerRef.current.pause();
+      if (isPlaying1) {
+        playerRef.current.pause();
+      }
       else {
         playerRef.current.resume();
       }
       setIsPlaying1(!isPlaying1);
-    }
-  
+    } 
     
   };
+  //This configures the play pause button for the second player
 
   const togglePlayPause2 = async () => {
     if (castState === CastState.CONNECTED) {
@@ -152,7 +240,9 @@ const App = () => {
       }
     }
     else{
-      if (isPlaying2) playerRef2.current.pause();
+      if (isPlaying2) {
+        playerRef2.current.pause();
+      }
       else {
         playerRef2.current.resume();
       }
@@ -161,28 +251,49 @@ const App = () => {
     }
   
   };
+
+  if(Platform.OS === 'ios'){
+    CarPlay.enableNowPlaying(true);
+  }
+  //This handles apples carplay connnection
   useEffect(() => { 
     if (!CarPlay.connected) {
       console.log('CarPlay not connected yet');
+      setIsCarPlayConnected(false);
     }
   
     const onConnect = ({ interfaceController, window }) => {
       console.log('CarPlay connected');
-      createListTemplate();
+      setIsCarPlayConnected(true);
+       createListTemplate();
     };
   
     const onDisconnect = () => {
       console.log('CarPlay disconnected');
+      setIsCarPlayConnected(false);
+
+      if (checkFlag.current) {
+        if (playerRef.current && !isPlaying1) {
+          playerRef.current.resume();
+          setIsPlaying1(true);
+        }
+        if (playerRef2.current && !isPlaying2) {
+          playerRef2.current.resume();
+          setIsPlaying2(true);
+        }
+      }
     };
   
     CarPlay.registerOnConnect(onConnect);
     CarPlay.registerOnDisconnect(onDisconnect);
+
   
     return () => {
       CarPlay.unregisterOnConnect(onConnect);
       CarPlay.unregisterOnDisconnect(onDisconnect);
     };
-  }, [CarPlay]);
+  }, []);
+  //This effect calls the function which defines what happens when cast is connected 
 
   useEffect(() => {
 
@@ -190,8 +301,7 @@ const App = () => {
       castAudio();
     }
   },[castState,client]);
-
-
+//This is the function that defines what happens when cast is connected
   const castAudio = async () => {
     if (!client) return;
   
@@ -205,7 +315,10 @@ const App = () => {
               type: 'musicTrack',
               title: 'Sample Audio 1',
               artist: 'Artist 1',
-              images: [{ url: 'https://upload.wikimedia.org/wikipedia/en/7/70/Example.png' }],
+              images: [{ url: 'https://assets.jazzgroove.org/sonos/Mix1.jpg' }],
+            },
+            customData: {
+              contentUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
             },
           },
           autoplay: true,
@@ -219,7 +332,10 @@ const App = () => {
               type: 'musicTrack',
               title: 'Sample Audio 2',
               artist: 'Artist 2',
-              images: [{ url: 'https://upload.wikimedia.org/wikipedia/en/7/70/Example.png' }],
+              images: [{ url: 'https://assets.jazzgroove.org/sonos/Dreams.jpg' }],
+            },
+            customData: {
+              contentUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
             },
           },
           autoplay: true,
@@ -227,16 +343,16 @@ const App = () => {
         },
       ];
   
-      const startIndex = lastPlay === 1 ? 0 : 1;
-  
+       const startIndex = lastPlay === 1 ? 0 : 1;
+       let startTime = startIndex === 0 ?audio1Position :audio2Position;
+
       await client.loadMedia({
         mediaInfo: mediaQueueItems[startIndex].mediaInfo,
         autoplay: true,
-        startTime: currentTime,
+        startTime: startTime,
         queueData: {
           items: mediaQueueItems,
           startIndex: startIndex,
-         
         },
       });
   
@@ -245,17 +361,13 @@ const App = () => {
       console.error('Failed to cast audio:', err);
     }
   };
-  
-  
+    //This effect is used to set the casting ref
   useEffect(() => {
       console.log('Cast state:', castState);
+      isCastingRef.current = castState === CastState.CONNECTED;
   }, [castState]);
 
-  useEffect(() => {
-    isCastingRef.current = castState === CastState.CONNECTED;
-  }, [castState]);
-  
-
+//This effect is responsible for controling what happens on local device when cast is connected
   useEffect(() => {
     if (castState === CastState.CONNECTED) {
       playerRef.current?.pause();
@@ -264,8 +376,6 @@ const App = () => {
       setIsPlaying2(false);
       return;
     }
-  
-   
     if (currentCastItem === 'audio2') {
       if (playerRef.current) {
         playerRef.current.pause();
@@ -273,7 +383,7 @@ const App = () => {
       }
       if (playerRef2.current) {
         playerRef2.current.resume();
-         setIsPlaying2(true);
+        setIsPlaying2(true);
         setPlayer2Volume(1.0);
         setPlayer1Volume(0);
         activePlayerRef.current = 2;
@@ -294,7 +404,7 @@ const App = () => {
       }
     }
   }, [castState, currentCastItem]);
-  
+  //This is the effect that triggers the crossfade when there are 25 seconds remaining on an audio to end 
   useEffect(() => {
     if (!playerRef.current || duration <= 0) return;
   
@@ -331,7 +441,7 @@ const App = () => {
     };
   }, [duration]);
   
-
+//This is the effect that returns position updates during the cast is connected
       useEffect(() => {
         let interval;
         let lastPosition = null;
@@ -344,9 +454,9 @@ const App = () => {
             try {
               const status = await client.getMediaStatus();
               const position = status?.streamPosition;
-              const currentMediaUrl = status?.mediaInfo?.contentUrl;
+              const currentMediaUrl =status?.mediaInfo?.contentUrl ??status?.mediaInfo?.customData?.contentUrl ??status?.mediaInfo?.metadata?.contentUrl;
               const playerState = status?.playerState;
-              
+             
               if (position !== undefined && position !== null) {
                 setCastStreamPosition(position);
                 positionUpdateCount++;
@@ -364,7 +474,6 @@ const App = () => {
                   lastPosition = position;
                 }
                 
-                
                 if (currentMediaUrl === 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3') {
                   setCurrentCastItem('audio1');
                 } else if (currentMediaUrl === 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3') {
@@ -376,42 +485,39 @@ const App = () => {
             }
           }, 50);
 
-          
-          manualUpdateInterval = setInterval(async () => {
-            try {
-              if (client && !isUpdating) {
-                isUpdating = true;
-                const status = await client.getMediaStatus();
-                
-                
-                if (status?.playerState === 'playing' && castState === CastState.CONNECTED) {
-                  const currentPosition = status?.streamPosition || 0;
-                  const duration = status?.mediaInfo?.streamDuration || 0;
-                  const expectedPosition = currentPosition + 0.1;
+           if (Platform.OS === 'android') {
+            manualUpdateInterval = setInterval(async () => {
+              try {
+                if (client && !isUpdating) {
+                  isUpdating = true;
+                  const status = await client.getMediaStatus();
                   
-                  if (expectedPosition < duration) {
-                    try {
-                      await client.seek({ position: expectedPosition });
-                      setCastStreamPosition(expectedPosition);
-                      console.log('Manual position update successful:', {
-                        current: currentPosition,
-                      });
-                    } catch (seekError) {
-                      if (seekError.message !== 'CANCELED') {
-                        console.warn('Seek operation failed:', seekError.message);
+                  if (status?.playerState === 'playing' && castState === CastState.CONNECTED) {
+                    const currentPosition = status?.streamPosition || 0;
+                    const duration = status?.mediaInfo?.streamDuration || 0;
+                    const expectedPosition = currentPosition + 0.1;
+                    
+                    if (expectedPosition < duration) {
+                      try {
+                        await client.seek({ position: expectedPosition });
+                        setCastStreamPosition(expectedPosition);
+                      } catch (seekError) {
+                        if (seekError.message !== 'CANCELED') {
+                          console.warn('Seek operation failed:', seekError.message);
+                        }
                       }
                     }
                   }
                 }
+              } catch (e) {
+                if (e.message !== 'CANCELED') {
+                  console.warn('Manual position update failed:', e.message);
+                }
+              } finally {
+                isUpdating = false;
               }
-            } catch (e) {
-              if (e.message !== 'CANCELED') {
-                console.warn('Manual position update failed:', e.message);
-              }
-            } finally {
-              isUpdating = false;
-            }
-          }, 100);
+            }, 100);
+           }
         }
       
         return () => {
@@ -419,13 +525,10 @@ const App = () => {
           if (manualUpdateInterval) clearInterval(manualUpdateInterval);
         };
       }, [castState, client, currentCastItem]);
-
-      
+//This effect sets the cast item based on the url of the audio that is playing which helps in handling local playback upon cast disconnection
       useEffect(() => {
         if (!client) return;
         let lastPosition = null;
-        let lastLogTime = Date.now();
-        let positionUpdateCount = 0;
 
         const subscription = client.onMediaStatusUpdated((status) => {
           const currentMediaUrl = status?.mediaInfo?.contentUrl;
@@ -434,21 +537,14 @@ const App = () => {
           
           if (position !== undefined && position !== null) {
             setCastStreamPosition(position);
-            positionUpdateCount++;
-            
-            
-            const now = Date.now();
-            if (position !== lastPosition && 
-                (positionUpdateCount % 10 === 0 || 
-                 (lastPosition !== null && Math.abs(position - lastPosition) > 1))) {
+          
+            if (position !== lastPosition && ((lastPosition !== null && Math.abs(position - lastPosition) > 1))) {
               console.log('Media status updated:', {
                 position,
                 currentMediaUrl,
-                playerState,
                 currentCastItem,
               });
               lastPosition = position;
-              lastLogTime = now;
             }
           }
 
@@ -464,7 +560,7 @@ const App = () => {
         };
       }, [client]);
 
-      
+    //This effect is responsible to seek the audio on cast to where the audio reached on local device  
       useEffect(() => {
         if (!client) return;
         let lastPosition = null;
@@ -475,15 +571,13 @@ const App = () => {
             const position = status.streamPosition;
             setCastStreamPosition(position);
             positionUpdateCount++;
-            
-            // Log every 10 position updates or when position changes significantly
+
             
             if (position !== lastPosition && 
                 (positionUpdateCount % 10 === 0 || 
                  (lastPosition !== null && Math.abs(position - lastPosition) > 1))) {
               console.log('Position update:', {
                 position,
-                updateCount: positionUpdateCount
               });
               lastPosition = position;
             }
@@ -495,7 +589,7 @@ const App = () => {
         };
       }, [client]);
 
-
+//This is the effect that calls a function that handles what happens on local device when cast is disconnected 
       useEffect(() => {
         
         const prevState = prevCastStateRef.current;
@@ -506,7 +600,6 @@ const App = () => {
       
           const resumeLocalPlayback = async () => {
             try {
-              // First, ensure both players are paused
               if (playerRef.current) {
                 await playerRef.current.pause();
                 setIsPlaying1(false);
@@ -527,15 +620,14 @@ const App = () => {
               if (currentCastItem === 'audio1') {
                 await playerRef.current.seek(castStreamPosition);
                 await playerRef.current.resume();
-                setIsPlaying1(true)
-                
+                setIsPlaying1(true);              
                 checkFlag.current = true;
                 
                 if (duration - castStreamPosition < startOnSecondsLeft) {
                   if (playerRef2.current) {
                     playerRef2.current.resume();
                     setIsPlaying2(true);
-                    onCrossfadeComplete();
+                    
                     
                     const percentage = (castStreamPosition - (duration - startOnSecondsLeft)) / startOnSecondsLeft;
                     const clampedPercentage = Math.min(Math.max(percentage, 0), 1);
@@ -543,25 +635,26 @@ const App = () => {
                     setPlayer1Volume(1 - clampedPercentage);
                   }
                 }
-              } else if (currentCastItem === 'audio2') {
+              } 
+              else if (currentCastItem === 'audio2') {
                 console.log('Resuming Audio2 playback at position:', castStreamPosition);
                 
-                // Ensure Audio1 is paused and reset
+                
                 if (playerRef.current) {
                   await playerRef.current.pause();
-                  //await playerRef.current.seek(0);
+                  await playerRef.current.seek(0);
                   setIsPlaying1(false);
                   setPlayer1Volume(0);
                 }
                 
-                // Set up Audio2
+               
                 await playerRef2.current.seek(castStreamPosition);
                 setPlayer2Volume(1.0);
                 setPlayer1Volume(0);
                 activePlayerRef.current = 2;
-                checkFlag.current = false; // Disable crossfade for Audio2
+                checkFlag.current = false; 
                 
-                // Start Audio2 playback
+                
                 await playerRef2.current.resume();
                 setIsPlaying2(true);
                 console.log('Audio2 playback resumed at position:', castStreamPosition);
@@ -576,279 +669,32 @@ const App = () => {
       
         prevCastStateRef.current = castState;
       }, [castState, currentCastItem, duration, castStreamPosition]);
-    
-      
-  // Modify the AppState effect to use the nextAppState directly
+
+
+//This is the effect for unmounting the video players 
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      console.log(`\n=== App State Change ===`);
-      console.log('Previous State:', appState);
-      console.log('New State:', nextAppState);
-      console.log('Current Time:', new Date().toISOString());
-      
-      if (appState.match(/active/) && nextAppState.match(/inactive|background/)) {
-        console.log('\n=== App Termination Started ===');
-        console.log('App is going to background or being terminated');
-        
-        // Log states before cleanup
-        console.log('\nStates before cleanup:');
-        console.log('App State:', nextAppState); // Use nextAppState instead of appState
-        console.log('Player States:', {
-          player1: {
-            isPlaying: isPlaying1,
-            volume: player1Volume,
-            currentTime: currentTime,
-            ref: playerRef.current ? 'Initialized' : 'Not Initialized'
-          },
-          player2: {
-            isPlaying: isPlaying2,
-            volume: player2Volume,
-            currentTime: currentTime,
-            ref: playerRef2.current ? 'Initialized' : 'Not Initialized'
-          }
-        });
-        console.log('Cast State:', castState);
-        console.log('Current Cast Item:', currentCastItem);
-        console.log('Cast Stream Position:', castStreamPosition);
-        console.log('Refs:', {
-          checkFlag: checkFlag.current,
-          activePlayer: activePlayerRef.current,
-          currentTimeRef: currentTimeRef.current,
-          prevCastState: prevCastStateRef.current,
-          isCasting: isCastingRef.current
-        });
-
-        // Perform cleanup
-        cleanupAppState();
-
-        // Log states after cleanup
-        console.log('\nStates after cleanup:');
-        console.log('App State:', nextAppState);
-        console.log('Player States:', {
-          player1: {
-            isPlaying: isPlaying1,
-            volume: player1Volume,
-            currentTime: currentTime,
-            ref: playerRef.current ? 'Initialized' : 'Not Initialized'
-          },
-          player2: {
-            isPlaying: isPlaying2,
-            volume: player2Volume,
-            currentTime: currentTime,
-            ref: playerRef2.current ? 'Initialized' : 'Not Initialized'
-          }
-        });
-        console.log('Cast State:', castState);
-        console.log('Current Cast Item:', currentCastItem);
-        console.log('Cast Stream Position:', castStreamPosition);
-        console.log('Refs:', {
-          checkFlag: checkFlag.current,
-          activePlayer: activePlayerRef.current,
-          currentTimeRef: currentTimeRef.current,
-          prevCastState: prevCastStateRef.current,
-          isCasting: isCastingRef.current
-        });
-        
-        console.log('=== App Termination Completed ===\n');
-      } else if (appState.match(/inactive|background/) && nextAppState.match(/active/)) {
-        console.log('\n=== App Initialization Started ===');
-        console.log('App is coming back to foreground');
-        
-        // Log states before initialization
-        console.log('\nStates before initialization:');
-        console.log('App State:', nextAppState);
-        console.log('Player States:', {
-          player1: {
-            isPlaying: isPlaying1,
-            volume: player1Volume,
-            currentTime: currentTime,
-            ref: playerRef.current ? 'Initialized' : 'Not Initialized'
-          },
-          player2: {
-            isPlaying: isPlaying2,
-            volume: player2Volume,
-            currentTime: currentTime,
-            ref: playerRef2.current ? 'Initialized' : 'Not Initialized'
-          }
-        });
-        console.log('Cast State:', castState);
-        console.log('Current Cast Item:', currentCastItem);
-        console.log('Cast Stream Position:', castStreamPosition);
-        console.log('Refs:', {
-          checkFlag: checkFlag.current,
-          activePlayer: activePlayerRef.current,
-          currentTimeRef: currentTimeRef.current,
-          prevCastState: prevCastStateRef.current,
-          isCasting: isCastingRef.current
-        });
-
-        // Perform initialization
-        initializeAppState();
-
-        // Log states after initialization
-        console.log('\nStates after initialization:');
-        console.log('App State:', nextAppState);
-        console.log('Player States:', {
-          player1: {
-            isPlaying: isPlaying1,
-            volume: player1Volume,
-            currentTime: currentTime,
-            ref: playerRef.current ? 'Initialized' : 'Not Initialized'
-          },
-          player2: {
-            isPlaying: isPlaying2,
-            volume: player2Volume,
-            currentTime: currentTime,
-            ref: playerRef2.current ? 'Initialized' : 'Not Initialized'
-          }
-        });
-        console.log('Cast State:', castState);
-        console.log('Current Cast Item:', currentCastItem);
-        console.log('Cast Stream Position:', castStreamPosition);
-        console.log('Refs:', {
-          checkFlag: checkFlag.current,
-          activePlayer: activePlayerRef.current,
-          currentTimeRef: currentTimeRef.current,
-          prevCastState: prevCastStateRef.current,
-          isCasting: isCastingRef.current
-        });
-        
-        console.log('=== App Initialization Completed ===\n');
-      }
-    });
-
     return () => {
-      subscription.remove();
+      if (playerRef.current) {
+        //playerRef.current.pause?.();    
+        playerRef.current.release?.();  
+      }
+      if (playerRef2.current) {
+        //playerRef2.current.pause?.();
+        playerRef2.current.release?.();
+      }
     };
-  }, [appState]);
-
-  // Add this function to log all states
-  const logAppStates = (context) => {
-    console.log(`\n=== ${context} ===`);
-    console.log('States:', {
-      player1Volume,
-      player2Volume,
-      duration,
-      isPlaying1,
-      isPlaying2,
-      currentTime,
-      castStreamPosition,
-      currentCastItem,
-      appState,
-    });
-    console.log('Refs:', {
-      checkFlag: checkFlag.current,
-      activePlayer: activePlayerRef.current,
-      currentTimeRef: currentTimeRef.current,
-      prevCastState: prevCastStateRef.current,
-      isCasting: isCastingRef.current,
-    });
-    console.log('Player States:', {
-      player1: playerRef.current ? {
-        isPlaying: isPlaying1,
-        volume: player1Volume,
-        currentTime: currentTime,
-      } : 'Not initialized',
-      player2: playerRef2.current ? {
-        isPlaying: isPlaying2,
-        volume: player2Volume,
-        currentTime: currentTime,
-      } : 'Not initialized',
-    });
-    console.log('========================\n');
-  };
-
-  // Modify the cleanup function
-  const cleanupAppState = async () => {
-    try {
-      console.log('\n=== App Cleanup Started ===');
-      logAppStates('Before Cleanup');
-
-      // Stop cast session if active
-      if (client) {
-        await client.stop();
-      }
-
-      // Pause all players
-      if (playerRef.current) {
-        await playerRef.current.pause();
-      }
-      if (playerRef2.current) {
-        await playerRef2.current.pause();
-      }
-
-      // Reset all states
-      setPlayer1Volume(1);
-      setPlayer2Volume(0);
-      setDuration(0);
-      setIsPlaying1(false);
-      setIsPlaying2(false);
-      setCurrentTime(0);
-      setCastStreamPosition(0);
-      setCurrentCastItem(null);
-
-      // Reset all refs
-      checkFlag.current = false;
-      activePlayerRef.current = 1;
-      currentTimeRef.current = 0;
-      prevCastStateRef.current = null;
-      isCastingRef.current = false;
-
-      logAppStates('After Cleanup');
-      console.log('=== App Cleanup Completed ===\n');
-    } catch (error) {
-      console.error('Error during app cleanup:', error);
-    }
-  };
-
-  // Modify the initialization function
-  const initializeAppState = () => {
-    try {
-      console.log('\n=== App Initialization Started ===');
-      logAppStates('Before Initialization');
-
-      // Reset all states to initial values
-      setPlayer1Volume(1);
-      setPlayer2Volume(0);
-      setDuration(0);
-      setIsPlaying1(false);
-      setIsPlaying2(false);
-      setCurrentTime(0);
-      setCastStreamPosition(0);
-      setCurrentCastItem(null);
-
-      // Reset all refs
-      checkFlag.current = false;
-      activePlayerRef.current = 1;
-      currentTimeRef.current = 0;
-      prevCastStateRef.current = null;
-      isCastingRef.current = false;
-
-      // Reset video players
-      if (playerRef.current) {
-        playerRef.current.seek(0);
-        playerRef.current.pause();
-      }
-      if (playerRef2.current) {
-        playerRef2.current.seek(0);
-        playerRef2.current.pause();
-      }
-
-      logAppStates('After Initialization');
-      console.log('=== App Initialization Completed ===\n');
-    } catch (error) {
-      console.error('Error during app initialization:', error);
-    }
-  };
+  }, []);
 
   return (
     
+         
     <View style={styles.container}>
     
       <View style={styles.playerContainer}>
         <Text style={styles.title}>First Audio </Text>
 
           <>
+          {/* This is the video component for the first player */}
             <Video
               source={testAudio1}
               ref={playerRef}
@@ -859,9 +705,10 @@ const App = () => {
               muted={false}
               controls={true}
               style={styles.hiddenVideo}
-              onPlay={() => setIsPlaying1(true)}
+              onPlay={() => {setIsPlaying1(true); setLastPlay(1)}}
               onPause={() => setIsPlaying1(false)}
               onEnd={() => setIsPlaying1(false)}
+              playInBackground={true}
             />
             
             <TouchableOpacity
@@ -882,18 +729,21 @@ const App = () => {
 
         
           <>
+          {/* This is the video component for the second player */}
             <Video
               source={testAudio2}
               ref={playerRef2}
               onProgress={handleProgress}
+              onLoad={handle2Load}
               audioOnly={true}
               volume={player2Volume}
               muted={false}
               controls={true}
               style={styles.hiddenVideo}
-              onPlay={() => setIsPlaying2(true)}
+              onPlay={() => {setIsPlaying2(true); setLastPlay(2)}}
               onPause={() => setIsPlaying2(false)}
               onEnd={() => setIsPlaying2(false)}
+              playInBackground={true}
             />
             <TouchableOpacity
               onPress={togglePlayPause2}
@@ -907,7 +757,6 @@ const App = () => {
                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       
     </View>
-       
       </View>
       <View>
       {isExternalPlaybackAvailable && (
@@ -921,9 +770,8 @@ const App = () => {
            </View>
       )}
       <View>
-      <CastButton style={{ width: 40, height: 40, tintColor: 'black' , backgroundColor: 'gray'}} onPress={castAudio}/>
+      <CastButton style={{ width: 40, height: 40, tintColor: 'black' , backgroundColor: 'gray'}} />
       </View>
-       
       </View>
     </View>
     
@@ -960,8 +808,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   hiddenVideo: {
-    height: 100,
-    width: 200,
+    height: 150,
+    width: 300,
   },
   button: {
     backgroundColor: '#007AFF',
@@ -1005,4 +853,3 @@ const styles = StyleSheet.create({
 });
 
 export default App;
-

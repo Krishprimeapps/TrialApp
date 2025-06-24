@@ -13,6 +13,8 @@
    }
   
    [RNCarPlay connectWithInterfaceController:interfaceController window:templateApplicationScene.carWindow];
+   [interfaceController setRootTemplate:[CPNowPlayingTemplate sharedTemplate] animated:YES];
+
  }
 
 - (void)templateApplicationScene:(CPTemplateApplicationScene *)templateApplicationScene didDisconnectInterfaceController:(CPInterfaceController *)interfaceController {

@@ -2840,6 +2840,7 @@ __metadata:
     react-airplay: ^1.2.0
     react-native: 0.73.11
     react-native-carplay: ^2.4.1-beta.0
+    react-native-google-cast: 4.6.1
     react-native-video: ^6.14.1
     react-test-renderer: 18.2.0
     typescript: 5.0.4
@@ -8002,6 +8003,16 @@ __metadata:
     react-native:
       optional: true
   checksum: f5c6689f12c4178fc9830a2fb47377d41d038e2b3b4290c747ec27230ce48e50c61fd2a32bc660667418146de77212354bc9caca8023ef5e96e6a7e9d4311193
+  languageName: node
+  linkType: hard
+
+"react-native-google-cast@npm:4.6.1":
+  version: 4.6.1
+  resolution: "react-native-google-cast@npm:4.6.1"
+  peerDependencies:
+    react: ">=15.1 || >=16.0.0"
+    react-native: ">=0.40"
+  checksum: 0fa1f52619085c7b72c14ba41ff79417aa531f1d034d99c96e17972722c795d4acc961a2c11a08b4b36e69c7456de83a0c2e6226aad8443027dd405ab0d89b46
   languageName: node
   linkType: hard
 
